@@ -1,0 +1,509 @@
+<html>
+<head>
+	<title></title>
+
+	<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+	<style type="text/css">
+
+/*	#main_cont {
+		display: flex;
+
+		flex-direction: column;
+
+		width: 100%;
+	}
+
+	#month_cont {
+		display: flex;
+
+		flex-direction: row;
+
+		
+		height: 50%;
+	}
+
+	#plot {
+		width: 50%;
+	}
+
+	#plot_control{
+		display: flex;
+
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	#year_cont {
+		display: flex;
+
+		height: 50%;
+		
+	}
+
+	#year_plot {
+		width: 50%;
+	}*/
+
+
+
+	</style>
+</head>
+<body>
+
+<div id='main_cont'>
+
+
+<div id='ann_cont'>
+	<div id='ann_plot' style='width: 65%; margin: auto;'></div>
+
+	<div style='width:65%; margin: auto;'>
+		<span style='margin-right: 10px'>Select Temp Data:</span>
+		<select id='ann_temp_type_select'>
+			<option value='lowest'>Lowest</option>
+			<option value='mean_min'>Min</option>
+			<option value='mean_max'>Max</option>
+			<option value='highest'>Highest</option>
+		</select>
+	</div>
+
+</div>
+
+<div id='month_cont'>
+
+	<div id='plot' style='width:65%; margin: auto'></div>
+
+
+	<div id='plot_control' style='width: 65%; margin: auto;'>
+		<button id='play_button'>Play</button>
+		<input style='width: 300px' id='year_slid' type='range' min=1900 max=2014 step=1 value=1900>
+		<span id='year_label'></span>
+
+
+		<div>
+			<select id='temp_type_select'>
+				<option value='mnth_mean_min'>Monthly Min</option>
+				<option value='mnth_mean_max'>Monthly Max</option>
+				<option value='mnth_lowest'>Monthly Lowest</option>
+				<option value='mnth_highest'>Monthly Highest</option>
+
+
+			</select>
+
+		</div>
+	</div>
+
+</div>
+
+
+<div id='year_cont'>
+	<div id='year_plot' style='width: 65%; margin: auto;'></div>
+</div>	
+
+
+</div>
+
+<script type="text/javascript">
+
+
+d3 = Plotly.d3;
+
+var plot = d3.select('#plot').node();
+var year_plot = d3.select('#year_plot').node();
+var ann_plot = d3.select('#ann_plot').node();
+
+
+
+d3.json('cc_data.json', function(data){
+
+	console.log(data)
+
+
+
+
+
+	var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+	var year = 1900;
+	var temp_type = 'mnth_mean_min';
+	var ann_temp_type = 'lowest';
+
+	var ann_temp_type_cols = {
+		mean_min: 'DodgerBlue',
+		mean_max: 'Peru',
+		lowest: 'DarkBlue',
+		highest: 'Red'
+	}
+
+	d3.select('#temp_type_select').on('change', function(){
+		temp_type = this.value;
+
+		plot_init()
+
+		Plotly.purge(year_plot)
+	})
+
+	d3.select('#ann_temp_type_select').on('change', function(){
+		ann_temp_type = this.value;
+
+		// ann_plot_init()
+		ann_plot_trans()
+	})
+
+
+	plot_init()
+	ann_plot_init()
+
+
+
+
+
+	// var ann_temps = ann_temp_types.map(function(att){
+	// 	return data[year][att];
+	// })
+
+	function ann_plot_init(){
+
+		var new_temp_data = data['years'].map(function(y){
+							return data[y][ann_temp_type]
+						})
+
+
+		var new_mean = d3.mean(new_temp_data);
+
+		var new_y_data = new_temp_data.map(function(t){
+			return t - new_mean;
+		})
+
+		var ann_trace = {
+			x: data['years'],
+			y: new_y_data,
+			mode: 'markers',
+			marker: {
+				size: 10,
+				color: ann_temp_type_cols[ann_temp_type]
+			}
+		}
+
+		Plotly.newPlot(ann_plot, [ann_trace], {yaxis:{range:[-7.5, 7.5]}})
+	}
+
+
+	function ann_plot_trans(){
+
+		var new_temp_data = data['years'].map(function(y){
+							return data[y][ann_temp_type]
+						})
+
+
+		var new_mean = d3.mean(new_temp_data);
+
+		var new_y_data = new_temp_data.map(function(t){
+			return t - new_mean;
+		})
+
+		// Plotly.relayout(ann_plot, {yaxis:{range:[-5, 50]}})
+
+		Plotly.animate(
+			ann_plot, 
+			{
+				data: [{y: new_y_data,
+						marker: {color: ann_temp_type_cols[ann_temp_type]}
+						}
+					]
+			},
+			{
+				transition: {
+					duration: 800
+				},
+				// Frame will pause for 1 second after transition
+				frame: {
+					duration: 800,
+					redraw: false
+				},
+				mode: 'immediate'
+			}
+
+		)
+
+		// setTimeout(function(){
+		// 	Plotly.relayout(ann_plot, {yaxis: {range:[d3.min(new_y_data), d3.max(new_y_data)]}});
+		// }, 900)
+		// // Plotly.relayout(ann_plot, {yaxis: {range:[d3.min(new_y_data), d3.max(new_y_data)]}})
+
+
+
+
+	}
+
+
+	function plot_init(){
+
+		var max_temp = d3.max(data['years'].map(function(y){
+			return d3.max(data[y][temp_type])
+		}))
+
+		var min_temp = d3.min(data['years'].map(function(y){
+			return d3.min(data[y][temp_type])
+		}))
+
+		trace = {
+				x: months,
+				y: data[year][temp_type],
+				mode: 'lines'
+			}
+
+		avg_trace = {
+			x: months,
+			y: data['mnthly_avgs'][temp_type],
+			mode: 'lines',
+			opacity: 1,
+			line:{color:'black', width: 5},
+			name: 'avg',
+			showlegend: true
+			}
+
+		layout = {
+			xaxis: {
+				range: [-1, 12]
+			},
+			yaxis: {
+				range: [min_temp, max_temp]
+			},
+			hovermode: 'closest'
+		}
+
+		Plotly.newPlot(plot, [trace, avg_trace], layout)
+
+
+
+		plot.on('plotly_click', function(click_data){
+			console.log(click_data);
+
+			var month = click_data['points'][0]['x'];
+			var month_idx = click_data['points'][0]['pointNumber']
+
+			var avg = data['mnthly_avgs'][temp_type][month_idx]
+
+			var mnth_trace = {
+				x: data['years'],
+				y: data['years'].map(function(y){
+					return data[y][temp_type][month_idx]
+				}),
+				name: month,
+				showlegend: true,
+				text: month
+			}
+
+			var layout = {
+				title: temp_type + ' for ' + month,
+
+				shapes: [{
+					type: 'line',
+					x0: data['years'][0],
+					x1: data['years'][data['years'].length-1],
+					y0: avg,
+					y1: avg,
+					line: {
+						color: 'gray',
+						width: 2,
+						opacity: 0.6,
+						dash: '5 2'
+
+					}
+				}]
+			}
+
+			Plotly.newPlot(year_plot, [mnth_trace], layout)
+
+		})		
+
+
+	}
+
+	
+
+
+
+	d3.select('#year_slid').on('input', function(){
+
+		prev = year;
+		year = parseInt(this.value);
+
+		console.log(prev, year);
+
+		d3.select('#year_label').text((year-20)+' - '+ year)
+
+		var yrs = d3.range(year-20, year)
+
+		// console.log(yrs)
+
+		var new_traces = yrs.map(function(y, i){
+			return {x:months, y:data[y][temp_type], opacity: ((i+1)/20),marker:{color:'gray'}, line:{color:'gray'}, showlegend: false, mode: 'lines', text:y}
+		})
+
+		new_traces.push(
+				{x:months, y:data[year][temp_type],marker:{color:'red'}, line:{color:'red', width:5}, showlegend: false, mode: 'lines', text:year}
+			)
+
+		// Plotly.restyle(plot, {opacity:0.6, marker:{color:'gray'}, line:{color:'gray'}})
+		
+		Plotly.deleteTraces(plot, d3.range(plot.data.length-1))
+		Plotly.addTraces(plot, new_traces, d3.range(yrs.length+1))
+
+
+
+
+
+
+
+
+		// Plotly.addTraces(plot, 	[{
+		// x: months,
+		// y: data['mnthly_avgs']['mnth_mean_min'],
+		// mode: 'lines',
+		// opacity: 1,
+		// line:{color:'black', width: 5},
+		// name: 'avg',
+		// showlegend: true
+		// }])
+
+
+		// if (year < (1900+10)) {
+		// 	Plotly.restyle(plot, {opacity:0.6, marker:{color:'gray'}, line:{color:'gray'}})
+
+		// 	Plotly.addTraces(plot, [{x:months, y:data[year]['mnth_mean_min'], marker:{color:'red'}, line:{color:'red'}}], 0)
+
+		// }
+
+		// else {
+
+
+		// 	var yrs = d3.range(year-10, year)
+
+		// 	console.log(yrs)
+
+		// 	var new_traces = yrs.map(function(y){
+		// 		return {x:months, y:data[y]['mnth_mean_min'], marker:{color:'gray'}, line:{color:'gray'}}
+		// 	})
+
+		// 	new_traces.push(
+		// 			{x:months, y:data[year]['mnth_mean_min'], marker:{color:'red'}, line:{color:'red'}}
+		// 		)
+
+		// 	// Plotly.restyle(plot, {opacity:0.6, marker:{color:'gray'}, line:{color:'gray'}})
+			
+		// 	Plotly.deleteTraces(plot, d3.range(plot.data.length))
+		// 	Plotly.addTraces(plot, new_traces)
+
+		// }
+
+		// if (year > prev) {
+		// 	new_yrs = d3.range(prev+1, year+1);
+		// 	Plotly.restyle(plot, {opacity:0.2, marker:{color:'black'}, line:{color:'black'}}, plot.data.length-1)
+		// 	new_traces = new_yrs.map(function(y){
+		// 		return {x: months, y:data[y]['mnth_mean_min'], showlegend: false,
+		// 				opacity:0.2, marker:{color:'black'}, line:{color:'black'}}
+		// 	})
+
+
+		// 	Plotly.addTraces(plot, new_traces)
+		// 	// Plotly.restyle(plot, {opacity:0.5, marker:{color:'black'}, line:{color:'black'}}, plot.data.length-2)
+		// 	Plotly.restyle(plot, {opacity:1, line:{color:'red'}}, plot.data.length-1)
+		// }
+
+		// if (year < prev) {
+		// 	Plotly.deleteTraces(plot, d3.range(-1, (year-prev)-1, -1))
+		// }
+
+		// curr_yrs = d3.range(1856, year+1);
+
+		// new_traces = curr_yrs.map(function(y){
+		// 	return {x: months, y:data[y]['mnth_mean_min'], showlegend: false, 
+		// 			opacity: ((y-1856)/(158))
+
+		// }
+		// })
+
+		// Plotly.deleteTraces(plot, d3.range(plot.data.length))
+		// Plotly.addTraces(plot, new_traces)
+
+		// if (year>prev) {
+		// 	var new_trace = {x:months, y:data[year]['mnth_mean_min'], showlegend: false}
+
+		// 	Plotly.restyle(plot, {marker: {color: 'black'}})
+
+		// 	Plotly.addTraces(plot, [new_trace])
+		// };
+
+		// if (year<prev) {
+		// 	// var new_trace = {x:months, y:data[year]['mnth_mean_min']}
+
+
+		// 	Plotly.deleteTraces(plot, -1)
+		// };
+
+
+
+		// Plotly.deleteTraces(plot, 0)
+		// Plotly.addTraces(plot, [{x:months, y:data[year]['mnth_mean_min']}], 0)
+
+
+	})
+
+
+d3.select('#play_button').on('click', function(){
+
+var play_yr = 1900;
+var interval = setInterval(function(){
+
+
+
+		d3.select('#year_label').text((play_yr-20)+' - '+ play_yr)
+
+		var yrs = d3.range(play_yr-20, play_yr)
+
+		// console.log(yrs)
+
+		var new_traces = yrs.map(function(y, i){
+			return {x:months, y:data[y][temp_type], opacity: ((i+1)/20),marker:{color:'gray'}, line:{color:'gray'}, showlegend: false, mode:'lines', text:y}
+		})
+
+		new_traces.push(
+				{x:months, y:data[play_yr][temp_type],marker:{color:'red'}, line:{color:'red', width:5}, showlegend: false, mode:'lines', text:play_yr}
+			)
+
+		// Plotly.restyle(plot, {opacity:0.6, marker:{color:'gray'}, line:{color:'gray'}})
+		
+		Plotly.deleteTraces(plot, d3.range(plot.data.length-1))
+		Plotly.addTraces(plot, new_traces, d3.range(yrs.length+1))
+
+
+
+
+	play_yr = play_yr + 1;
+
+	if (play_yr > 2014) {
+		clearInterval(interval);
+	}
+}, 100)
+
+
+
+})
+
+window.onresize = function() {
+    Plotly.Plots.resize(plot);
+    Plotly.Plots.resize(year_plot);
+};
+
+
+// End ASYNC Data file function
+})
+
+
+
+
+</script>
+</body>
+</html>
