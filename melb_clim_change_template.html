@@ -1,0 +1,69 @@
+<html>
+<head>
+	<title>Climate Change in Melbourne</title>
+
+	<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</head>
+<body>
+
+
+
+
+
+	<div id='ann_plot' style='width: 65%; margin: auto;'></div>
+
+	<div style='width:65%; margin: auto;'>
+		<span style='margin-right: 10px'>Select Temp Data:</span>
+		
+		<select id='ann_temp_type_select'>
+			<option value='lowest'>Lowest</option>
+			<option value='mean_min'>Min</option>
+			<option value='mean_max'>Max</option>
+			<option value='highest'>Highest</option>
+		</select>
+	</div>
+
+
+
+
+
+	<div id='plot' style='width:65%; margin: auto'></div>
+
+
+	<div id='plot_control' style='width: 65%; margin: auto;'>
+		<button id='play_button'>Play</button>
+		<input style='width: 300px' id='year_slid' type='range' min=1900 max=2014 step=1 value=1900>
+		<span id='year_label'></span>
+
+
+		<div>
+			<select id='temp_type_select'>
+				<option value='mnth_mean_min'>Monthly Min</option>
+				<option value='mnth_mean_max'>Monthly Max</option>
+				<option value='mnth_lowest'>Monthly Lowest</option>
+				<option value='mnth_highest'>Monthly Highest</option>
+
+
+			</select>
+
+		</div>
+	</div>
+
+
+
+
+
+	<div id='year_plot' style='width: 65%; margin: auto;'></div>
+	
+
+
+
+
+<script type="text/javascript">
+
+</script>
+
+
+</body>
+</html>
