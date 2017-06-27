@@ -1,0 +1,118 @@
+<html>
+<head>
+	<title></title>
+
+	<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+
+
+	<div id='plot' style='width: 60%; margin: auto'></div>
+
+	<div id='plot2' style='width: 60%; margin: auto'></div>
+
+
+
+
+
+	<script type="text/javascript">
+
+
+
+	var d3 = Plotly.d3;
+
+	var my_plot = Plotly.d3.select('#plot').node();
+
+	var my_play_plot = Plotly.d3.select('#plot2').node();
+
+
+
+
+	d3.csv('https://raw.githubusercontent.com/maegul/melb_clim_change/master/date_close.csv', function(data){
+
+
+
+		console.log(data);
+
+
+		// Line graph
+
+		x_data = data.map(function(row){
+			return row['date'];
+		})
+
+		y_data = data.map(function(row){
+			return row['close'];
+		})
+
+
+		var trace = {
+			x: x_data,
+			y: y_data,
+			text: 'Apple',
+
+			line: {
+				color: 'purple',
+				width: 1.5
+			}
+		}
+
+		var layout = {
+			title: 'Stock Price over Time',
+			xaxis: {
+				tickangle: -35,
+				nticks: 10
+			}
+		}
+
+		Plotly.newPlot(my_plot, [trace], layout)
+
+
+
+		// histogram
+
+		var hist_trace = {
+			x: y_data,
+			type:'histogram',
+			histnorm: 'percent',
+			marker: {
+				color: 'rgba(200, 96, 120, 0.9)',
+				line: {
+					color: 'black',
+					width: 1
+				}
+			}
+		}
+
+
+		var layout = {
+			bargap: 0,
+
+			title: 'Price Distribution',
+
+			xaxis: {
+				title: 'Price'
+			},
+
+			yaxis: {
+				title: 'Percent'
+			}
+		}
+
+
+		Plotly.newPlot(my_play_plot, [hist_trace], layout)
+
+
+
+
+
+// end async function
+	})	
+
+
+
+	</script>
+
+</body>
+</html>
