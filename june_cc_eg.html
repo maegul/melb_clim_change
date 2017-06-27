@@ -1,0 +1,428 @@
+<html>
+<head>
+	<title>Climate Change in Melbourne</title>
+
+	<script type="text/javascript" src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+</head>
+<body>
+
+
+
+
+
+	<div id='ann_plot' style='width: 65%; margin: auto;'></div>
+
+	<div style='width:65%; margin: auto;'>
+		<span style='margin-right: 10px'>Select Temp Data:</span>
+		
+		<select id='ann_temp_type_select'>
+			<option value='lowest'>Lowest</option>
+			<option value='mean_min'>Min</option>
+			<option value='mean_max'>Max</option>
+			<option value='highest'>Highest</option>
+		</select>
+	</div>
+
+
+
+
+<div style='display: flex; flex-direction: row;'>
+	<div id='plot' style='width:60%;'></div>
+	<div id='mnth_year_plot' style='width: 40%;'></div>
+</div>
+
+	<div id='plot_control' style='width: 65%; margin: auto;'>
+		<button id='play_button'>Play</button>
+		<input style='width: 300px' id='year_slid' type='range' min=1900 max=2014 step=1 value=2014>
+		<span id='year_label'></span>
+
+
+		<div>
+			<select id='temp_type_select'>
+				<option value='mnth_mean_min'>Monthly Min</option>
+				<option value='mnth_mean_max'>Monthly Max</option>
+				<option value='mnth_lowest'>Monthly Lowest</option>
+				<option value='mnth_highest'>Monthly Highest</option>
+
+
+			</select>
+
+		</div>
+	</div>
+
+
+	<div id='heatmap' style='width: 65%; margin: auto'></div>
+
+
+
+
+
+	
+	
+
+
+
+
+<script type="text/javascript">
+
+var d3 = Plotly.d3;
+
+d3.json('https://raw.githubusercontent.com/maegul/melb_clim_change_proto/master/cc_data.json', function(data){
+
+
+console.log(data);
+
+
+
+//  Pull into JS
+
+var plot = d3.select('#plot').node();
+
+var month_year_plot = d3.select('#mnth_year_plot').node();
+
+var heatmap = d3.select('#heatmap').node();
+
+
+
+var year_slid = d3.select('#year_slid');
+
+var play_button = d3.select('#play_button');
+
+var temp_type_select = d3.select('#temp_type_select');
+
+
+
+
+
+// Master Variables
+
+var year = 2014;
+d3.select('#year_label').text(year);
+
+
+var temp_type = 'mnth_mean_min';
+
+var months = data['months'];
+
+//  months in numbers, 0 = jan
+var month = 0;
+
+
+
+// Helper Functions
+
+function make_month_temp_avg(){
+
+
+	var month_temp_avg = {
+		x: months,
+		y: data['mnthly_avgs'][temp_type],
+
+		name: 'Average',
+
+		mode: 'lines',
+
+		line: {
+			width: 0.8,
+			color: 'black'
+		}
+	}
+
+	return month_temp_avg;
+
+}
+
+
+
+function make_month_temp_trace(){
+
+	var month_temp_trace = {
+		x: months,
+		y: data[year][temp_type],
+
+		name: year,
+
+		line: {
+			color: 'rgb(255,115,112)'
+		}
+	}
+
+	return month_temp_trace;
+}
+
+
+
+function make_mnth_year_trace(){
+
+	var mnth_year_trace = {
+		x: data['years'],
+
+		y: data['years'].map(function(y){
+			return data[y][temp_type][month]
+		}),
+
+		name: months[month]
+	}
+
+	return mnth_year_trace;
+}
+
+
+
+function make_mnth_year_highlight(){
+
+	var mnth_year_highlight = {
+		x: [year],
+		y: [data[year][temp_type][month]],
+
+		mode: 'markers',
+
+		name: year,
+
+		marker: {
+			size: 15,
+			color: 'red',
+			symbol: 'circle-open'
+		}
+	}
+
+	return mnth_year_highlight;
+
+}
+
+
+
+function make_mnth_year_layout(){
+
+	var mnth_year_layout = {
+		title: data['months'][month] + ' Across the Years'
+	}
+
+	return mnth_year_layout;
+
+}
+
+
+function make_plot(){
+
+
+	if (temp_type == 'mnth_mean_min') {
+		var y_range = [4, 18];
+	}
+
+	if (temp_type == 'mnth_mean_max') {
+		var y_range = [12, 29];
+	}
+
+	var layout = {
+		title: 'Monthly Temps',
+		hovermode: 'closest',
+		yaxis: {
+			range: y_range
+		}
+	}
+
+
+	Plotly.newPlot(plot, [make_month_temp_avg(), make_month_temp_trace()], layout)
+
+
+
+	plot.on('plotly_click', function(click_data){
+		console.log('hello ... im plot')
+		console.log(click_data)
+
+		month = click_data['points'][0]['pointNumber'];
+
+		make_mnth_year_plot();
+
+
+})	
+
+	
+}
+
+
+function make_mnth_year_plot(){
+
+	var trace = make_mnth_year_trace()
+
+	var mean = d3.mean(trace['y']);
+
+	var mean_dat = trace['x'].map(function(x){
+		return mean;
+	});
+
+	var avg_trace = {
+		x: trace['x'],
+		y: mean_dat,
+
+		line: {
+			width: 2,
+			dash: 'dot',
+			color: 'black'
+		},
+
+		name: 'average'
+	}
+
+	Plotly.newPlot(
+		month_year_plot, 
+		[make_mnth_year_trace(), avg_trace, make_mnth_year_highlight()], 
+		make_mnth_year_layout()
+	)
+
+
+
+}
+
+
+function make_hm_trace(){
+
+	var hm_data = data['years'].map(function(y){
+
+		return data[y][temp_type].map(function(m, i){
+
+			return m - data['mnthly_avgs'][temp_type][i];
+
+		})
+	})
+
+	var hm_trace = {
+		z : hm_data,
+
+		y: data['years'],
+		x: months,
+
+		type: 'heatmap'
+	}
+	
+	return hm_trace;
+}
+
+function make_heatmap(){
+
+
+	Plotly.newPlot(heatmap, [make_hm_trace()])
+
+	heatmap.on('plotly_click', function(cd){
+		console.log(cd);
+	})
+
+}
+
+
+
+// Initialise
+
+make_plot();
+
+make_mnth_year_plot();
+
+make_heatmap()
+
+
+
+// Year Slider
+
+year_slid.on('input', function(){
+	console.log(this.value);
+
+	year = parseInt(this.value);
+
+	d3.select('#year_label').text(year);
+
+	Plotly.deleteTraces(plot, 1);
+
+	Plotly.addTraces(plot, make_month_temp_trace())
+
+
+
+	Plotly.deleteTraces(month_year_plot, 2);
+
+	Plotly.addTraces(month_year_plot, make_mnth_year_highlight())
+
+
+
+
+})
+
+
+// Play Animation
+
+
+play_button.on('click', function(){
+
+	year = 1900;
+	d3.select('#year_label').text(year);
+
+
+	function play_animation(){
+
+		year = year + 1;
+		d3.select('#year_label').text(year);
+
+
+		year_slid.node().value = year;
+
+		console.log(year);
+
+		Plotly.deleteTraces(plot, 1);
+
+		Plotly.addTraces(plot, make_month_temp_trace())
+
+		Plotly.deleteTraces(month_year_plot, 2);
+
+		Plotly.addTraces(month_year_plot, make_mnth_year_highlight())
+
+		
+
+		if (year == 2014) {
+			clearInterval(play_func)
+		}
+
+	}
+
+
+	var play_func = setInterval(play_animation, 10)
+
+})
+
+
+
+
+
+temp_type_select.on('change', function(){
+	temp_type = this.value;
+
+	console.log(temp_type);
+
+	make_plot();
+	make_mnth_year_plot();
+	make_heatmap();
+})
+
+
+
+
+plot.on('plotly_click', function(click_data){
+	console.log('hello ... im plot')
+	console.log(click_data)
+
+	month = click_data['points'][0]['pointNumber'];
+
+	make_mnth_year_plot();
+
+
+})
+
+
+
+// End data load	
+})
+
+</script>
+
+
+</body>
+</html>
