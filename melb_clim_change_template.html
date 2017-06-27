@@ -27,13 +27,14 @@
 
 
 
-
-	<div id='plot' style='width:65%; margin: auto'></div>
-
+<div style='display: flex; flex-direction: row;'>
+	<div id='plot' style='width:60%;'></div>
+	<div id='mnth_year_plot' style='width: 40%;'></div>
+</div>
 
 	<div id='plot_control' style='width: 65%; margin: auto;'>
 		<button id='play_button'>Play</button>
-		<input style='width: 300px' id='year_slid' type='range' min=1900 max=2014 step=1 value=1900>
+		<input style='width: 300px' id='year_slid' type='range' min=1900 max=2014 step=1 value=2014>
 		<span id='year_label'></span>
 
 
@@ -51,10 +52,13 @@
 	</div>
 
 
+	<div id='heatmap' style='width: 65%; margin: auto'></div>
 
 
 
-	<div id='year_plot' style='width: 65%; margin: auto;'></div>
+
+
+	
 	
 
 
